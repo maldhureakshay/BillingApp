@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:reciept_generator_app/database/dbhelper.dart';
 import 'package:reciept_generator_app/model/Record.dart';
 import 'package:reciept_generator_app/recordList.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
 
 void main() => runApp(new MyApp());
 
@@ -12,7 +16,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       title: appTitle,
-      home:  MyRecordList(),
+      home:  MyCustomForm(),
     );
   }
 }
@@ -35,7 +39,7 @@ class MyCustomFormState extends State<MyCustomForm> {
   final _formKey = GlobalKey<FormState>();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  DRecord record = new DRecord("", "", "", "","");
+  DRecord record = new DRecord("", "", "", "","",0);
  
   String customerName; 
   String orderNo;
@@ -109,7 +113,7 @@ class MyCustomFormState extends State<MyCustomForm> {
              keyboardType: TextInputType.number
           ),
           TextFormField(
-             decoration: InputDecoration(labelText: "Paid Amout"),
+            decoration: InputDecoration(labelText: "Paid Amout"),
             validator: (value) {
               if (value.isEmpty) {
                 return 'Please enter paid amount';
@@ -133,7 +137,14 @@ class MyCustomFormState extends State<MyCustomForm> {
           ))
         ],
       )
-    )
+    ),
+    floatingActionButton: new FloatingActionButton(
+      elevation: 0.0,
+      child: new Icon(Icons.menu),
+      onPressed: (){
+        navigateToRecordList();
+      }
+    ),
     );
         
 
@@ -144,11 +155,14 @@ class MyCustomFormState extends State<MyCustomForm> {
      }else{
        return null;
      }
-    var record = DRecord(customerName,orderNo,mobileNo,totalAmount,paidAmount);
+    var dateTime = new DateTime.now().millisecondsSinceEpoch;
+    
+    var record = DRecord(customerName,orderNo,mobileNo,totalAmount,paidAmount,dateTime);
     var dbHelper = DBHelper();
     dbHelper.saveRecord(record);
     _showSnackBar("Data saved successfully");
-    navigateToRecordList();
+    sendSms();
+    //navigateToRecordList();
   }
 
   void _showSnackBar(String text) {
@@ -161,6 +175,19 @@ class MyCustomFormState extends State<MyCustomForm> {
     context,
     new MaterialPageRoute(builder: (context) => new MyRecordList()),
   );
+  }
+
+  static const platform = const MethodChannel('sendSms');
+
+  Future<Null> sendSms()async {
+    
+    try {
+      final String result = await platform.invokeMethod('send',<String,dynamic>{"phone":"+919595903117","msg":"Hello! I'm sent programatically."}); //Replace a 'X' with 10 digit phone number
+      _showSnackBar(result);
+  
+    } on PlatformException catch (e) {
+      print(e.toString());
+    }
   }
 }
 

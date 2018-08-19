@@ -24,44 +24,26 @@ class DBHelper {
   void _onCreate(Database db, int version) async {
     // When creating the db, create the table
     await db.execute(
-        "CREATE TABLE Record(id INTEGER PRIMARY KEY, customerName TEXT, orderNo TEXT,mobileNo TEXT, totalAmount TEXT,paidAmount TEXT )");
+        "CREATE TABLE Record(id INTEGER PRIMARY KEY, customerName TEXT, orderNo TEXT,mobileNo TEXT, totalAmount TEXT,paidAmount TEXT,date INTEGER)");
     print("Created tables");
   }
 
   void saveRecord(DRecord record) async {
     var dbClient = await db;
+    
     await dbClient.transaction((txn) async {
       return await txn.rawInsert(
-          'INSERT INTO Record(customerName, orderNo,mobileNo, totalAmount, paidAmount ) VALUES(' +
-              '\'' +
-              record.customerName +
-              '\'' +
-              ',' +
-              '\'' +
-              record.orderNo +
-              '\'' +
-              ',' +
-              '\'' +
-              record.mobileNo +
-              '\'' +
-              ',' +
-              '\'' +
-              record.totalAmount +
-              '\'' +
-              ',' +
-              '\'' +
-              record.paidAmount +
-              '\'' +
-              ')');
+          'INSERT INTO Record(customerName, orderNo,mobileNo, totalAmount, paidAmount, date) VALUES(\'${record.customerName}\',\'${record.orderNo}\',\'${record.mobileNo}\',\'${record.totalAmount}\', \'${record.paidAmount}\',\'${record.date}\')'
+      );
     });
   }
 
   Future<List<DRecord>> getRecords() async {
     var dbClient = await db;
-    List<Map> list = await dbClient.rawQuery('SELECT * FROM Record');
+    List<Map> list = await dbClient.rawQuery('SELECT * FROM Record order by date DESC');
     List<DRecord> records = new List();
     for (int i = 0; i < list.length; i++) {
-      records.add(new DRecord(list[i]["customerName"], list[i]["orderNo"],list[i]["mobileNo"], list[i]["totalAmount"], list[i]["paidAmount"]));
+      records.add(new DRecord(list[i]["customerName"], list[i]["orderNo"],list[i]["mobileNo"], list[i]["totalAmount"], list[i]["paidAmount"], list[i]["date"]));
     }
     print(records.length);
     return records;
